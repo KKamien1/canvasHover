@@ -1,32 +1,10 @@
 const canva = function (e) {
 	const target = e.target
 	let color = 'rgba(240,78,23,.5)'
-	//let ctx = createCanvas(target)
-	//let corners = getCorners(target)
-	//let triangles = makeTriArrays(corners)
-	//console.log(triangles)
-
 	const overlay = new Overlay(e.target);
 	overlay.init(e.target)
-
 	overlay.ctx.fillStyle = color;
-	overlay.ctx.fillRect(30, 40, 50, 40);
 	overlay.animateMask()
-	//start()
-
-	// triangles.forEach(function (item, index) {
-	// 	const tri[index] = new Triangle(item);
-	// 	tri[index].draw(ctx);
-
-	// })
-
-	//const tri = new Triangle(a, b, c);
-	//const tri2 = new Triangle(b, c, d);
-
-	//tri.draw(ctx);
-
-	//loop(0, tri);
-
 }
 
 
@@ -79,38 +57,16 @@ const createCanvas = function (el) {
 
 const removeCanvas = function (e) {
 	e.target.querySelector('canvas').remove()
-	//overlay.stop()
-	//cancelAnimationFrame()
 }
 
-const getCorners = function (el) {
-	let data = getVars(el)
-	const a = {
-			x: 0,
-			y: 0
-		},
-		b = {
-			x: data.width,
-			y: 0
-		},
-		c = {
-			x: data.width,
-			y: data.height
-		},
-		d = {
-			x: 0,
-			y: data.height
-		}
-	return [
-		a,
-		b,
-		c,
-		d
-	]
-}
+
 
 let t = 0;
 let dim = 5000;
+
+VAR = {
+	ease: 'easeInCubic'
+}
 
 class Overlay {
 	constructor(el) {
@@ -119,6 +75,8 @@ class Overlay {
 		this.y = el.getBoundingClientRect().y;
 		this.width = el.getBoundingClientRect().width;
 		this.height = el.getBoundingClientRect().height;
+
+		this.triangles = [];
 
 		this.requestId = false;
 		this.t = 0;
@@ -135,10 +93,6 @@ class Overlay {
 		el.appendChild(canvas)
 		this.ctx = canvas.getContext('2d')
 		this.createTriangles()
-/*		this.t1 = new Triangle({x:0,y:0}, {x:500,y:0}, {x:500,y:300});
-		this.t2 = new Triangle({x:500,y:0},{x:500,y:300},{x:0,y:300});
-		this.t3 = new Triangle({x:500,y:300}, {x:0,y:300},{x:0,y:0} );
-		this.t4 = new Triangle({x:0,y:300},{x:0,y:0},{x:500,y:0} );*/
 		document.querySelector('.box').addEventListener('mouseleave', () => this.stop())
 	}
 	animateMask(time) {
@@ -153,73 +107,77 @@ class Overlay {
 	}
 	stop() {
 		if (this.requestId) {
-		window.cancelAnimationFrame(this.requestId);
-		this.requestId = undefined;
+			window.cancelAnimationFrame(this.requestId);
+			this.requestId = undefined;
 		}
 	}
 	animate(time) {
 		if (time - lastTime >= 1000 / fps) {
-		this.lastTime = time;
-		this.ctx.clearRect(0, 0, this.width, this.height);
+			this.lastTime = time;
+			this.ctx.clearRect(0, 0, this.width, this.height);
 
-		this.t1.draw(this.ctx)
-		this.t1.update(this.width, this.height, this.t, this.dim)
-		this.t2.draw(this.ctx)
-		this.t2.update(this.width, this.height, this.t, this.dim)
+			this.triangles.forEach(tri => {
+				tri.draw(this.ctx)
+				tri.update(this.width, this.height, this.t, this.dim)
 
-		this.t3.draw(this.ctx)
-		this.t3.update(this.width, this.height, this.t, this.dim)	
+			})
 
-		this.t4.draw(this.ctx)
-		this.t4.update(this.width, this.height, this.t, this.dim)
-
-
-		//this.a.x = Easing.get('easeInOutCubic', 0, this.width, this.t, this.dim);
-		//tri.draw(ctx);
-		//tri.update();
-
-		this.t += 1000 / this.fps;
-		if (t >= this.dim) {
-			console.log('t małe')
-			//forward = !forward;
-			this.t = 0;
-			//return;
-
-		}
+			this.t += 1000 / this.fps;
+			if (t >= this.dim) {
+				this.t = 0;
+			}
 		}
 	}
 	createTriangles() {
-		let a = {
+		const corners = [{
 			x: 0,
 			y: 0
-		};
-		let b = {
-			x: this.width,
+		}, {
+			x: this.el.getBoundingClientRect().width,
 			y: 0
-		};
-		let c = {
-			x: this.width,
-			y: this.height
-		};
-		let d = {
+		}, {
+			x: this.el.getBoundingClientRect().width,
+			y: this.el.getBoundingClientRect().height
+		}, {
 			x: 0,
-			y: this.height
-		};
-		this.t1 = new Triangle(a, b, c);
-		this.t2 = new Triangle(b, c, d);
-		this.t3 = new Triangle(c, d, a);
-		this.t4 = new Triangle(d, a, b);
+			y: this.el.getBoundingClientRect().height
+		}];
+		const cornersArr = [
+			[0, 0],
+			[this.el.getBoundingClientRect().width, 0],
+			[this.el.getBoundingClientRect().width, this.el.getBoundingClientRect().height],
+			[0, this.el.getBoundingClientRect().height]
+		];
 
-		//console.log(this.t1.constructor === this.t2.constructor)
+		const tris = makeTriArrays(cornersArr);
+
+		console.log(tris);
+
+		tris.forEach((tri, index) => {
+			const t = new Triangle(tri[0], tri[1], tri[2]);
+			console.log(t);
+			this.triangles.push(t)
+		});
+
+
 	}
 }
 
 class Triangle {
 	constructor(right, peak, left) {
-		this.peak = peak;
-		this.l = left;
-		this.r = right;
-		this.ease = 'easeInCubic';
+		this.peak = {
+			x: peak[0],
+			y: peak[1]
+		};
+		this.l = {
+			x: left[0],
+			y: left[1]
+		};
+		this.r = {
+			x: right[0],
+			y: right[1]
+		};
+
 	}
 	draw(ctx) {
 		ctx.beginPath()
@@ -230,102 +188,18 @@ class Triangle {
 		ctx.fill()
 		//console.log(this)
 	}
-	update(width, height, t,dim) {
+	update(width, height, t, dim) {
 
+		this.l.x = Easing.get(VAR.ease,
+			(this.l.x == this.peak.x ? this.peak.x : (this.l.x > this.peak.x) ? width : 0), this.peak.x, t, dim)
+		this.l.y = Easing.get(VAR.ease, (this.l.y == this.peak.y ? this.peak.y : (this.l.y > this.peak.y) ? height : 0), this.peak.y, t, dim)
 
-/*		this.l.x = Easing.get(this.ease, 0, 500, t,dim )
-		this.l.y = Easing.get(this.ease, 0, 500, t,dim )
-
-		this.r.x = Easing.get(this.ease, 0, 500, t,dim )
-		this.r.y = Easing.get(this.ease, 0, 500, t,dim )*/
-
-		//console.log(this.peak)
-
-
- 	this.l.x = Easing.get(this.ease, 
-			(this.l.x == this.peak.x ? this.peak.x : (this.l.x > this.peak.x) ? width : 0 ), this.peak.x
-			, t,dim )
-		this.l.y = Easing.get(this.ease, (this.l.y == this.peak.y ? this.peak.y : (this.l.y > this.peak.y) ? height : 0 ), this.peak.y, t,dim )
-
-		this.r.x = Easing.get(this.ease, 
-			(this.r.x == this.peak.x ? this.peak.x : (this.r.x > this.peak.x) ? width : 0 ), this.peak.x
-			, t,dim )
-		this.r.y = Easing.get(this.ease, (this.r.y == this.peak.y ? this.peak.y : (this.r.y > this.peak.y) ? height : 0 ), this.peak.y, t,dim )
+		this.r.x = Easing.get(VAR.ease,
+			(this.r.x == this.peak.x ? this.peak.x : (this.r.x > this.peak.x) ? width : 0), this.peak.x, t, dim)
+		this.r.y = Easing.get(VAR.ease, (this.r.y == this.peak.y ? this.peak.y : (this.r.y > this.peak.y) ? height : 0), this.peak.y, t, dim)
 
 
 	}
 }
-
-
 let fps = 60,
 	lastTime = 0;
-
-// function loop(time, tri) {
-
-// 	requestAnimationFrame(loop);
-// 	if (time - lastTime >= 1000 / fps) {
-// 		lastTime = time;
-// 		console.log(`t=${t}  dim=${dim} tri.x=${tri.left.x}`)
-// 		ctx.clearRect(0, 0, c.x, c.y);
-
-// 		tri.draw(ctx);
-// 		tri.update();
-
-// 		t += 1000 / fps;
-// 		if (t >= dim) {
-// 			console.log('t małe')
-// 			//forward = !forward;
-// 			t = 0;
-// 			//return;
-
-// 		}
-
-// 	}
-// }
-
-
-var requestId;
-
-function loop(time) {
-	requestId = undefined;
-
-	doStuff(time)
-	start();
-}
-
-function start() {
-	if (!requestId) {
-		requestId = window.requestAnimationFrame(loop);
-	}
-}
-
-function stop() {
-	if (requestId) {
-		window.cancelAnimationFrame(requestId);
-		requestId = undefined;
-	}
-}
-
-function doStuff(time) {
-	document.querySelector('.box').textContent = (time * 0.001).toFixed(2);
-}
-
-
-//document.addEventListener('DOMContentLoaded', loop)
-//loop();
-
-class Typ {
-	constructor(name) {
-		this.name = 'Janek';
-		this.last = 'Dupa'
-	}
-}
-
-class D {
-	constructor(name, inne) {
-		this.name = name;
-		this.last = inne;
-	}
-}
-
-//const q = 
