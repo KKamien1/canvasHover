@@ -2,15 +2,16 @@ const canva = function (e) {
 	const target = e.target
 	let color = 'rgba(240,78,23,.5)'
 	//let ctx = createCanvas(target)
-	let corners = getCorners(target)
-	let triangles = makeTriArrays(corners)
-	console.log(triangles)
+	//let corners = getCorners(target)
+	//let triangles = makeTriArrays(corners)
+	//console.log(triangles)
 
 	const overlay = new Overlay(e.target);
-	let ctx = overlay.init(e.target)
+	overlay.init(e.target)
 
 	overlay.ctx.fillStyle = color;
 	overlay.ctx.fillRect(30, 40, 50, 40);
+	overlay.animateMask()
 	//start()
 
 	// triangles.forEach(function (item, index) {
@@ -26,21 +27,10 @@ const canva = function (e) {
 
 	//loop(0, tri);
 
-
-
-
-	//console.log(b, c, d.x)
 }
 
-// const arr = ['a', 'b', 'c', 'd'];
 
-// (function (arr) {
-// 	const set = arr.reduce(function (acc, item, i) {
-// 		acc.push(arr.slice(i, 3))
-// 		return acc
-// 	}, [])
-// 	console.log(set)
-// })(arr)
+
 function makeTriArrays(arr) {
 	let r = [];
 	arr.forEach(function () {
@@ -89,7 +79,7 @@ const createCanvas = function (el) {
 
 const removeCanvas = function (e) {
 	e.target.querySelector('canvas').remove()
-	stop()
+	//overlay.stop()
 	//cancelAnimationFrame()
 }
 
@@ -124,26 +114,17 @@ let dim = 5000;
 
 class Overlay {
 	constructor(el) {
+		this.el = el;
 		this.x = el.getBoundingClientRect().x;
 		this.y = el.getBoundingClientRect().y;
 		this.width = el.getBoundingClientRect().width;
 		this.height = el.getBoundingClientRect().height;
-		this.a = {
-			x: 0,
-			y: 0
-		};
-		this.b = {
-			x: this.width,
-			y: 0
-		};
-		this.c = {
-			x: this.width,
-			y: this.height
-		};
-		this.d = {
-			x: 0,
-			y: this.height
-		}
+
+		this.requestId = false;
+		this.t = 0;
+		this.lastTime = 0;
+		this.fps = 60;
+		this.dim = 1000;
 	}
 	init(el) {
 		el.style.position = 'relative'
@@ -152,43 +133,126 @@ class Overlay {
 		canvas.width = this.width
 		canvas.height = this.height
 		el.appendChild(canvas)
-		//console.log('init w overlay')
 		this.ctx = canvas.getContext('2d')
+		this.createTriangles()
+/*		this.t1 = new Triangle({x:0,y:0}, {x:500,y:0}, {x:500,y:300});
+		this.t2 = new Triangle({x:500,y:0},{x:500,y:300},{x:0,y:300});
+		this.t3 = new Triangle({x:500,y:300}, {x:0,y:300},{x:0,y:0} );
+		this.t4 = new Triangle({x:0,y:300},{x:0,y:0},{x:500,y:0} );*/
+		document.querySelector('.box').addEventListener('mouseleave', () => this.stop())
+	}
+	animateMask(time) {
+		this.requestId = undefined;
+		this.animate(time)
+		this.start()
+	}
+	start() {
+		if (!this.requestId) {
+			this.requestId = window.requestAnimationFrame(this.animateMask.bind(this));
+		}
+	}
+	stop() {
+		if (this.requestId) {
+		window.cancelAnimationFrame(this.requestId);
+		this.requestId = undefined;
+		}
+	}
+	animate(time) {
+		if (time - lastTime >= 1000 / fps) {
+		this.lastTime = time;
+		this.ctx.clearRect(0, 0, this.width, this.height);
+
+		this.t1.draw(this.ctx)
+		this.t1.update(this.width, this.height, this.t, this.dim)
+		this.t2.draw(this.ctx)
+		this.t2.update(this.width, this.height, this.t, this.dim)
+
+		this.t3.draw(this.ctx)
+		this.t3.update(this.width, this.height, this.t, this.dim)	
+
+		this.t4.draw(this.ctx)
+		this.t4.update(this.width, this.height, this.t, this.dim)
+
+
+		//this.a.x = Easing.get('easeInOutCubic', 0, this.width, this.t, this.dim);
+		//tri.draw(ctx);
+		//tri.update();
+
+		this.t += 1000 / this.fps;
+		if (t >= this.dim) {
+			console.log('t małe')
+			//forward = !forward;
+			this.t = 0;
+			//return;
+
+		}
+		}
 	}
 	createTriangles() {
-		this.t1 = new Triangle(this.a, this.b, this.c);
-		this.t2 = new Triangle(this.b, this.c, this.d);
-		this.t3 = new Triangle(this.c, this.d, this.a);
-		this.t4 = new Triangle(this.d, this.a, this.b);
+		let a = {
+			x: 0,
+			y: 0
+		};
+		let b = {
+			x: this.width,
+			y: 0
+		};
+		let c = {
+			x: this.width,
+			y: this.height
+		};
+		let d = {
+			x: 0,
+			y: this.height
+		};
+		this.t1 = new Triangle(a, b, c);
+		this.t2 = new Triangle(b, c, d);
+		this.t3 = new Triangle(c, d, a);
+		this.t4 = new Triangle(d, a, b);
+
+		//console.log(this.t1.constructor === this.t2.constructor)
 	}
 }
 
 class Triangle {
-	constructor(a, b, c) {
-		this.peak = b;
-		this.left = c;
-		this.right = a;
-		this.ease = 'easeInOutCubic';
+	constructor(right, peak, left) {
+		this.peak = peak;
+		this.l = left;
+		this.r = right;
+		this.ease = 'easeInCubic';
 	}
 	draw(ctx) {
 		ctx.beginPath()
 		ctx.moveTo(this.peak.x, this.peak.y)
-		ctx.lineTo(this.left.x, this.left.y)
-		ctx.lineTo(this.right.x, this.right.y)
+		ctx.lineTo(this.l.x, this.l.y)
+		ctx.lineTo(this.r.x, this.r.y)
 		ctx.closePath()
 		ctx.fill()
+		//console.log(this)
 	}
-	update() {
-		this.left.x = this.left.x + 1;
-		this.left.y = this.left.y + 1;
+	update(width, height, t,dim) {
 
-		this.right.x = this.right.x + 1;
-		this.right.y = this.right.y + 1;
-		// this.left.x = Easing.get(this.ease, this.left.x, this.peak.x, t, dim);
-		// this.left.y = Easing.get(this.ease, this.left.y, this.peak.y, t, dim);
 
-		// this.right.x = Easing.get(this.ease, this.left.x, this.peak.x, t, dim);
-		// this.right.y = Easing.get(this.ease, this.left.y, this.peak.y, t, dim);
+/*		this.l.x = Easing.get(this.ease, 0, 500, t,dim )
+		this.l.y = Easing.get(this.ease, 0, 500, t,dim )
+
+		this.r.x = Easing.get(this.ease, 0, 500, t,dim )
+		this.r.y = Easing.get(this.ease, 0, 500, t,dim )*/
+
+		//console.log(this.peak)
+
+
+ 	this.l.x = Easing.get(this.ease, 
+			(this.l.x == this.peak.x ? this.peak.x : (this.l.x > this.peak.x) ? width : 0 ), this.peak.x
+			, t,dim )
+		this.l.y = Easing.get(this.ease, (this.l.y == this.peak.y ? this.peak.y : (this.l.y > this.peak.y) ? height : 0 ), this.peak.y, t,dim )
+
+		this.r.x = Easing.get(this.ease, 
+			(this.r.x == this.peak.x ? this.peak.x : (this.r.x > this.peak.x) ? width : 0 ), this.peak.x
+			, t,dim )
+		this.r.y = Easing.get(this.ease, (this.r.y == this.peak.y ? this.peak.y : (this.r.y > this.peak.y) ? height : 0 ), this.peak.y, t,dim )
+
+
 	}
 }
 
@@ -245,3 +309,23 @@ function stop() {
 function doStuff(time) {
 	document.querySelector('.box').textContent = (time * 0.001).toFixed(2);
 }
+
+
+//document.addEventListener('DOMContentLoaded', loop)
+//loop();
+
+class Typ {
+	constructor(name) {
+		this.name = 'Janek';
+		this.last = 'Dupa'
+	}
+}
+
+class D {
+	constructor(name, inne) {
+		this.name = name;
+		this.last = inne;
+	}
+}
+
+//const q = 
