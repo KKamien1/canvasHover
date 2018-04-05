@@ -1,8 +1,9 @@
 const canva = function (e) {
 	const target = e.target
+	console.log(target)
 	let color = 'rgba(240,78,23,.5)'
 	const overlay = new Overlay(e.target);
-	overlay.init(e.target)
+	overlay.init(target)
 	overlay.ctx.fillStyle = color;
 	overlay.animateMask()
 }
@@ -29,9 +30,12 @@ const drawTri = function (ctx, a, b, c, color = "#000") {
 	ctx.fill()
 }
 window.addEventListener('DOMContentLoaded', function () {
-	const box = document.querySelector('.box')
-	box.addEventListener('mouseenter', canva)
-	box.addEventListener('mouseleave', removeCanvas)
+	const boxes = document.querySelectorAll('.box')
+	boxes.forEach(box => {
+		box.addEventListener('mouseenter', canva)
+		box.addEventListener('mouseleave', removeCanvas)
+		
+	})
 })
 
 const getVars = function (el) {
@@ -46,11 +50,14 @@ const createCanvas = function (el) {
 		height
 	} = getVars(el)
 	const canvas = document.createElement('canvas')
-	const ctx = canvas.getContext('2d')
-	canvas.style.position = 'absolute'
-	canvas.width = width
-	canvas.height = height
+	canvas.style.position = 'absolute';
+
+	canvas.id = "mask"	;
+	canvas.width = width;
+	canvas.height = height;
 	el.appendChild(canvas)
+	//el.insertAdjacentHTML('beforeend',canvas)
+	const ctx = canvas.getContext('2d')
 
 	return ctx
 }
@@ -82,14 +89,15 @@ class Overlay {
 		this.t = 0;
 		this.lastTime = 0;
 		this.fps = 60;
-		this.dim = 1000;
+		this.dim = 600;
 	}
 	init(el) {
-		el.style.position = 'relative'
+		//el.style.position = 'relative'
 		const canvas = document.createElement('canvas')
 		canvas.style.position = 'absolute'
 		canvas.width = this.width
 		canvas.height = this.height
+		canvas.classList.add('canva');	
 		el.appendChild(canvas)
 		this.ctx = canvas.getContext('2d')
 		this.createTriangles()

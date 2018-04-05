@@ -49,6 +49,18 @@
             height: 300px;
             margin: 50px auto;
             border: 1px solid #222;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .over-layer {
+            margin-top: -100%;
+        }
+
+        .canva {
+            top:0;
+            left:0;
+            background: rgba(0,0,0,.2);
         }
     </style>
 
@@ -58,8 +70,13 @@
 
 
     <div class="box">
-
+        <p>Treść</p>
+        <div class="over-layer">
+            <img src="https://benamimusic.files.wordpress.com/2013/05/freedom-converted.jpg" alt="">
+        </div>
     </div>
+    <div class="box"></div>
+    <div class="box"></div>
 
 
 
